@@ -11,20 +11,36 @@ Product leader, 20 years working with engineers, never written code. Learning as
 - Don't assume I know terminal commands, package managers, or framework conventions.
 - If there's a meaningful decision, pause and ask me.
 - If I haven't asked for it, don't add it.
+- **Thin vertical slices**: build one usable end-to-end journey first, not full layers.
 
 ## The Problem
 My partner has ADHD. She thinks of tasks throughout the day but loses them before she can write them down. Existing tools fail because they have too many steps. This app captures a thought at the speed it occurs. If something adds friction to the moment of capture, it's wrong.
 
 ## What We're Building
-Read SPEC.md — it's the source of truth. In short: one-button voice capture, browser speech-to-text, Claude Haiku extracts tasks, shared list in Upstash Redis. Two users, secret URL for auth.
+Read SPEC.md — it's the source of truth.
 
 ## Infrastructure (all done)
-- GitHub repo: barrypace/voice-tasks (private) — connected
-- Vercel project: voice-tasks (linked to GitHub, hobby tier) — linked via Vercel CLI
+- GitHub repo: barrypace/voice-tasks (public) — connected to Vercel
+- Vercel project: voice-tasks — deployed and live
+- **Production URL**: https://voice-tasks-xi.vercel.app
+- **App URL**: https://voice-tasks-xi.vercel.app/app/14402617-b909-441e-b743-6be800569b29
 - Upstash Redis: connected to Vercel project — credentials in .env.local
-- Anthropic API key: in .env.local
-- APP_SLUG: in .env.local (UUID, used as the secret URL path)
+- Anthropic API key: in .env.local (personal account key, org `e839a10f`)
+- APP_SLUG: `14402617-b909-441e-b743-6be800569b29` — in .env.local and set in Vercel env vars
 - Next.js scaffolded with TypeScript, App Router, no Tailwind, no ESLint
+
+## ⚠️ Known Local Issue
+`ANTHROPIC_API_KEY` is set as a shell environment variable (probably in `~/.zshrc` or `~/.zprofile`) pointing to a work Anthropic account with no credit. This overrides `.env.local` when running `npm run dev` normally. Workaround: start the dev server with the key explicitly set:
+```
+ANTHROPIC_API_KEY="sk-ant-api03-Rk0..." npm run dev
+```
+Fix properly by removing the shell env var from `~/.zshrc`.
+
+## Current State (2026-04-08)
+- App is fully built and deployed
+- Capture screen: tap red button → speak → Claude extracts tasks → confirm/discard
+- List screen: view tasks, tap to mark done, clear done
+- Awaiting real-world testing with partner
 
 ## How We Track What We're Building
 - **SPEC.md** is the current truth of what we're building. We update it together as we make changes. Don't add things independently.
