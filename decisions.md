@@ -14,6 +14,13 @@
 - **vercel.json needed to fix framework detection**: Vercel defaulted to Framework Preset "Other" instead of Next.js, so it served static files and skipped the build entirely. Added `vercel.json` with `framework: nextjs` to fix.
 - **APP_SLUG must be added to Vercel env vars separately**: `.env.local` is not deployed. `ANTHROPIC_API_KEY` and `APP_SLUG` must be set explicitly via Vercel dashboard or CLI.
 
+## Safari iOS + PWA session (2026-04-08)
+- **Web Speech API stops after each utterance on iOS**: `continuous: true` causes Safari iOS to stop recognition immediately after the first utterance and fire `onend` with an empty result. Fix: set `continuous: false` and `interimResults: false` on iOS, and restart recognition in `onend` while `isRecordingRef` is true. Text accumulates across restarts in `accumulatedRef`.
+- **Separate user intent from recognition state**: Added `isRecordingRef` (user's intent) alongside `recognitionRef` (browser's active session). These diverge on iOS because the browser restarts mid-speech. `isRecordingRef` is the source of truth for whether to keep listening.
+- **Error codes mapped to actionable messages**: `not-allowed` → tells user to check Safari settings. `no-speech` → silent restart. `network` → connectivity message. `aborted` → ignored (user-initiated stop). Previous code treated all errors identically.
+- **PWA manifest for home screen install**: Added `public/manifest.json` and iOS-specific meta tags in `layout.tsx` (`appleWebApp`, `manifest`, `icons`). Without this, "Add to Home Screen" installs a bare bookmark with no icon and no standalone mode.
+- **Icons generated with Node.js zlib**: No ImageMagick or extra dependencies. Pure Node.js script using `zlib.deflateSync` to write valid PNG bytes. Red circle (#c92a2a) on white, matching the record button.
+
 ## Pre-build (2026-04-07)
 - **Upstash Redis instead of Vercel KV**: Vercel no longer offers native KV. Upstash Redis is what Vercel KV was built on, same thing with a different name. Use `@upstash/redis` SDK.
 - **Claude Haiku 4.5 instead of Haiku 3**: Current cheapest model is `claude-haiku-4-5-20251001`, faster and smarter at the same price point.
