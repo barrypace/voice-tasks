@@ -40,7 +40,9 @@ Fix properly by removing the shell env var from `~/.zshrc`.
 - App is fully built and deployed
 - Capture screen: tap red button → speak → Claude extracts tasks → confirm/discard
 - List screen: view tasks, tap to mark done, clear done
-- Awaiting real-world testing with partner
+- Safari iOS audio fixed: restart loop handles iOS's per-utterance stop behaviour; text accumulates across sessions
+- PWA installed on partner's iPhone home screen via Safari → Share → Add to Home Screen
+- **In live trial with partner**
 
 ## How We Track What We're Building
 - **SPEC.md** is the current truth of what we're building. We update it together as we make changes. Don't add things independently.
@@ -48,7 +50,7 @@ Fix properly by removing the shell env var from `~/.zshrc`.
 
 ## Constraints
 - No database, auth library, queue, or separate transcription service.
-- Web Speech API may be flaky on mobile Safari — flag issues as we encounter them.
+- Web Speech API on iOS Safari requires a restart loop (`continuous: false` + restart on `onend`). This is implemented — see DECISIONS.md for detail.
 
 ## Project Directory
 /Users/Barry.Pace/personal/voice-tasks
