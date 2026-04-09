@@ -18,7 +18,7 @@ export default function AppShell() {
         {view === 'tasks' && <ListView />}
         {view === 'questions' && <QuestionsListView />}
       </div>
-      <nav className="flex border-t border-black/10 dark:border-white/10 shrink-0">
+      <nav className="flex border-t border-border shrink-0">
         {(['capture', 'tasks', 'questions'] as View[]).map((v) => (
           <button
             key={v}

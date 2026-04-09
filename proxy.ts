@@ -8,6 +8,15 @@ function expectedToken(): string {
 }
 
 export function proxy(request: NextRequest) {
+  // Cron endpoint: authenticate with bearer token instead of cookie
+  if (request.nextUrl.pathname === '/api/push/remind') {
+    const authHeader = request.headers.get('authorization')
+    if (authHeader === `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.next()
+    }
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+  }
+
   const cookie = request.cookies.get('vt-auth')
   const expected = expectedToken()
 

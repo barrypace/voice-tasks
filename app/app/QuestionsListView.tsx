@@ -52,7 +52,7 @@ export default function QuestionsListView() {
           {pending.map(q => (
             <li
               key={q.id}
-              className="py-4 px-1 text-base leading-relaxed border-b border-black/10 dark:border-white/10 cursor-pointer active:opacity-50 transition-opacity"
+              className="py-4 px-1 text-base leading-relaxed border-b border-border cursor-pointer active:opacity-50 transition-opacity"
               onClick={() => toggleSeen(q.id)}
             >
               {q.text}
@@ -61,7 +61,7 @@ export default function QuestionsListView() {
           {seen.map(q => (
             <li
               key={q.id}
-              className="py-4 px-1 text-base leading-relaxed border-b border-black/10 dark:border-white/10 cursor-pointer active:opacity-50 transition-opacity line-through opacity-35"
+              className="py-4 px-1 text-base leading-relaxed border-b border-border cursor-pointer active:opacity-50 transition-opacity line-through opacity-35"
               onClick={() => toggleSeen(q.id)}
             >
               {q.text}

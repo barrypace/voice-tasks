@@ -3,13 +3,31 @@
 import { useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import type { Assignee } from '../api/tasks/route'
 
 type State = 'idle' | 'recording' | 'processing' | 'confirming'
+type TaskItem = { text: string; assignee: Assignee }
+
+const ASSIGNEE_ORDER: Assignee[] = [null, 'Ji', 'Barry']
+
+function AssigneeBadge({ assignee, onClick }: { assignee: Assignee; onClick: () => void }) {
+  const label = assignee === 'Ji' ? 'Ji' : assignee === 'Barry' ? 'B' : '?'
+  const bgClass = assignee === 'Ji' ? 'bg-badge-ji' : assignee === 'Barry' ? 'bg-badge-barry' : 'bg-badge-none'
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick() }}
+      className={cn('w-7 h-7 rounded-full text-xs font-semibold shrink-0 border-none cursor-pointer text-white', bgClass)}
+      aria-label={`Assigned to ${assignee ?? 'nobody'}. Tap to change.`}
+    >
+      {label}
+    </button>
+  )
+}
 
 export default function CaptureView() {
   const [state, setState] = useState<State>('idle')
   const [transcript, setTranscript] = useState('')
-  const [tasks, setTasks] = useState<string[]>([])
+  const [tasks, setTasks] = useState<TaskItem[]>([])
   const [error, setError] = useState<string | null>(null)
   const [savedMsg, setSavedMsg] = useState<string | null>(null)
 
@@ -121,9 +139,8 @@ export default function CaptureView() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transcript: text }),
       })
-      const data: { tasks: string[]; question: string | null } = await res.json()
+      const data: { tasks: TaskItem[]; question: string | null } = await res.json()
 
-      // Save question immediately (silently) if one was captured
       if (data.question) {
         fetch('/api/questions', {
           method: 'POST',
@@ -150,11 +167,20 @@ export default function CaptureView() {
     }
   }
 
+  function cycleAssignee(index: number) {
+    setTasks(prev => prev.map((t, i) => {
+      if (i !== index) return t
+      const currentIdx = ASSIGNEE_ORDER.indexOf(t.assignee)
+      const nextIdx = (currentIdx + 1) % ASSIGNEE_ORDER.length
+      return { ...t, assignee: ASSIGNEE_ORDER[nextIdx] }
+    }))
+  }
+
   async function confirm() {
     await fetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ texts: tasks }),
+      body: JSON.stringify({ items: tasks }),
     })
     reset()
   }
@@ -171,11 +197,12 @@ export default function CaptureView() {
   if (state === 'confirming') {
     return (
       <div className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto">
-        <p className="text-sm opacity-50 italic leading-relaxed">"{transcript.trim()}"</p>
+        <p className="text-sm opacity-50 italic leading-relaxed">&ldquo;{transcript.trim()}&rdquo;</p>
         <ul className="flex flex-col gap-3 flex-1">
           {tasks.map((task, i) => (
-            <li key={i} className="text-lg px-4 py-4 rounded-xl bg-black/5 dark:bg-white/5 leading-snug">
-              {task}
+            <li key={i} className="text-lg px-4 py-4 rounded-xl bg-secondary leading-snug flex items-center justify-between gap-3">
+              <span>{task.text}</span>
+              <AssigneeBadge assignee={task.assignee} onClick={() => cycleAssignee(i)} />
             </li>
           ))}
         </ul>
@@ -195,9 +222,9 @@ export default function CaptureView() {
     <div className="flex-1 flex flex-col items-center justify-center gap-8 p-6">
       <button
         className={cn(
-          'w-44 h-44 rounded-full border-none cursor-pointer transition-colors bg-red-700',
-          state === 'recording' && 'bg-red-900 animate-pulse-record',
-          state === 'processing' && 'bg-gray-400 cursor-default'
+          'w-44 h-44 rounded-full border-none cursor-pointer transition-colors bg-record',
+          state === 'recording' && 'bg-record-active animate-pulse-record',
+          state === 'processing' && 'bg-record-disabled cursor-default'
         )}
         onClick={handleButtonClick}
         disabled={state === 'processing'}
@@ -215,7 +242,7 @@ export default function CaptureView() {
         <p className="text-base opacity-45 text-center">Thinking\u2026</p>
       )}
       {savedMsg && <p className="text-base opacity-60 text-center">{savedMsg}</p>}
-      {error && <p className="text-sm text-red-600 text-center max-w-[280px]">{error}</p>}
+      {error && <p className="text-sm text-destructive text-center max-w-[280px]">{error}</p>}
     </div>
   )
 }
