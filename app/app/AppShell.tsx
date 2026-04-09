@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import CaptureView from './CaptureView'
 import ListView from './ListView'
+import QuestionsView from './QuestionsView'
 import styles from './app.module.css'
 
-type View = 'capture' | 'list'
+type View = 'capture' | 'tasks' | 'questions'
 
 export default function AppShell() {
   const [view, setView] = useState<View>('capture')
@@ -13,7 +14,9 @@ export default function AppShell() {
   return (
     <div className={styles.shell}>
       <div className={styles.content}>
-        {view === 'capture' ? <CaptureView /> : <ListView />}
+        {view === 'capture' && <CaptureView />}
+        {view === 'tasks' && <ListView />}
+        {view === 'questions' && <QuestionsView />}
       </div>
       <nav className={styles.nav}>
         <button
@@ -23,10 +26,16 @@ export default function AppShell() {
           Capture
         </button>
         <button
-          className={view === 'list' ? styles.navActive : styles.navItem}
-          onClick={() => setView('list')}
+          className={view === 'tasks' ? styles.navActive : styles.navItem}
+          onClick={() => setView('tasks')}
         >
-          List
+          Tasks
+        </button>
+        <button
+          className={view === 'questions' ? styles.navActive : styles.navItem}
+          onClick={() => setView('questions')}
+        >
+          Questions
         </button>
       </nav>
     </div>

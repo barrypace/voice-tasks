@@ -1,0 +1,39 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createHmac, timingSafeEqual } from 'crypto'
+
+function expectedToken(): string {
+  return createHmac('sha256', process.env.APP_SECRET ?? '')
+    .update(process.env.APP_PASSWORD ?? '')
+    .digest('hex')
+}
+
+export function proxy(request: NextRequest) {
+  const cookie = request.cookies.get('vt-auth')
+  const expected = expectedToken()
+
+  let authenticated = false
+  if (cookie?.value) {
+    try {
+      const cookieBytes = Buffer.from(cookie.value)
+      const expectedBytes = Buffer.from(expected)
+      if (cookieBytes.length === expectedBytes.length) {
+        authenticated = timingSafeEqual(cookieBytes, expectedBytes)
+      }
+    } catch {
+      authenticated = false
+    }
+  }
+
+  if (!authenticated) {
+    if (request.nextUrl.pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+    }
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: ['/app', '/api/:path*'],
+}

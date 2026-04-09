@@ -1,7 +1,7 @@
 {
   "name": "Voice Tasks",
   "short_name": "Voice Tasks",
-  "start_url": "/app/14402617-b909-441e-b743-6be800569b29",
+  "start_url": "/app",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#c92a2a",

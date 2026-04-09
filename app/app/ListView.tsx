@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { Task } from '../../api/tasks/route'
+import type { Task } from '../api/tasks/route'
 import styles from './app.module.css'
 
 export default function ListView() {

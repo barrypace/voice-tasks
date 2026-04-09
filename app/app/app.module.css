@@ -221,3 +221,85 @@
   opacity: 0.7;
   flex-shrink: 0;
 }
+
+/* ── Questions view ─────────────────────────── */
+
+.questionsView {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.questionCaptureArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  gap: 16px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+  flex-shrink: 0;
+}
+
+/* Smaller blue button — same mechanism as the red task button */
+.questionBtn {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: #1971c2;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.questionBtn:disabled {
+  background: rgba(128, 128, 128, 0.35);
+  cursor: default;
+}
+
+.questionBtnActive {
+  background: #1154a0;
+  animation: pulseBlue 1.6s ease-out infinite;
+}
+
+@keyframes pulseBlue {
+  0%   { box-shadow: 0 0 0 0 rgba(25, 113, 194, 0.5); }
+  70%  { box-shadow: 0 0 0 24px rgba(25, 113, 194, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(25, 113, 194, 0); }
+}
+
+.questionListArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.questionList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.questionItem {
+  padding: 16px 4px;
+  font-size: 16px;
+  line-height: 1.4;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.questionItem:active {
+  opacity: 0.5;
+}
+
+.questionSeen {
+  text-decoration: line-through;
+  opacity: 0.35;
+}
