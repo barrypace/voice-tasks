@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createHmac, timingSafeEqual } from 'crypto'
-import styles from './login.module.css'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 async function login(formData: FormData) {
   'use server'
@@ -29,7 +30,7 @@ async function login(formData: FormData) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 30, // 30 days
+    maxAge: 60 * 60 * 24 * 30,
     path: '/',
   })
 
@@ -45,22 +46,23 @@ export default async function LoginPage({
   const hasError = params.error === '1'
 
   return (
-    <main className={styles.page}>
-      <form action={login} className={styles.form}>
-        <h1 className={styles.title}>Voice Tasks</h1>
-        <input
+    <main className="flex items-center justify-center h-dvh px-6">
+      <form action={login} className="flex flex-col gap-4 w-full max-w-xs">
+        <h1 className="text-xl font-semibold text-center mb-2">Voice Tasks</h1>
+        <Input
           type="password"
           name="password"
           placeholder="Password"
           autoComplete="current-password"
           autoFocus
           required
-          className={styles.input}
         />
-        <button type="submit" className={styles.button}>
+        <Button type="submit" className="w-full">
           Enter
-        </button>
-        {hasError && <p className={styles.error}>Wrong password. Try again.</p>}
+        </Button>
+        {hasError && (
+          <p className="text-sm text-destructive text-center">Wrong password. Try again.</p>
+        )}
       </form>
     </main>
   )

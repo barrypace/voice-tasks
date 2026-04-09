@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { cn } from '@/lib/utils'
 import CaptureView from './CaptureView'
 import ListView from './ListView'
-import QuestionsView from './QuestionsView'
-import styles from './app.module.css'
+import QuestionsListView from './QuestionsListView'
 
 type View = 'capture' | 'tasks' | 'questions'
 
@@ -12,31 +12,25 @@ export default function AppShell() {
   const [view, setView] = useState<View>('capture')
 
   return (
-    <div className={styles.shell}>
-      <div className={styles.content}>
+    <div className="flex flex-col h-dvh">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {view === 'capture' && <CaptureView />}
         {view === 'tasks' && <ListView />}
-        {view === 'questions' && <QuestionsView />}
+        {view === 'questions' && <QuestionsListView />}
       </div>
-      <nav className={styles.nav}>
-        <button
-          className={view === 'capture' ? styles.navActive : styles.navItem}
-          onClick={() => setView('capture')}
-        >
-          Capture
-        </button>
-        <button
-          className={view === 'tasks' ? styles.navActive : styles.navItem}
-          onClick={() => setView('tasks')}
-        >
-          Tasks
-        </button>
-        <button
-          className={view === 'questions' ? styles.navActive : styles.navItem}
-          onClick={() => setView('questions')}
-        >
-          Questions
-        </button>
+      <nav className="flex border-t border-black/10 dark:border-white/10 shrink-0">
+        {(['capture', 'tasks', 'questions'] as View[]).map((v) => (
+          <button
+            key={v}
+            onClick={() => setView(v)}
+            className={cn(
+              'flex-1 py-4 text-[15px] border-none bg-transparent text-inherit cursor-pointer capitalize transition-opacity',
+              view === v ? 'opacity-100 font-semibold' : 'opacity-40'
+            )}
+          >
+            {v}
+          </button>
+        ))}
       </nav>
     </div>
   )

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import styles from './app.module.css'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 type State = 'idle' | 'recording' | 'processing' | 'confirming'
 
@@ -10,11 +11,12 @@ export default function CaptureView() {
   const [transcript, setTranscript] = useState('')
   const [tasks, setTasks] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [savedMsg, setSavedMsg] = useState<string | null>(null)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null)
-  const accumulatedRef = useRef('')    // text built up across iOS restart sessions
-  const isRecordingRef = useRef(false) // user's intent — survives recognition restarts
+  const accumulatedRef = useRef('')
+  const isRecordingRef = useRef(false)
 
   function handleButtonClick() {
     if (state === 'idle') startRecording()
@@ -34,8 +36,8 @@ export default function CaptureView() {
     isRecordingRef.current = true
     setTranscript('')
     setError(null)
+    setSavedMsg(null)
     setState('recording')
-
     startSession(SpeechRecognitionAPI)
   }
 
@@ -44,16 +46,13 @@ export default function CaptureView() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
 
     const recognition = new SpeechRecognitionAPI()
-    // iOS stops recognition after each utterance when continuous=true
     recognition.continuous = !isIOS
-    // interim results are unreliable on iOS
     recognition.interimResults = !isIOS
     recognition.lang = 'en-GB'
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onresult = (event: any) => {
       if (isIOS) {
-        // On iOS: no interim results, one final per session — accumulate across restarts
         let sessionText = ''
         for (let i = 0; i < event.results.length; i++) {
           sessionText += event.results[i][0].transcript + ' '
@@ -61,7 +60,6 @@ export default function CaptureView() {
         accumulatedRef.current += sessionText
         setTranscript(accumulatedRef.current.trim())
       } else {
-        // Desktop: rebuild full text from all results each time onresult fires
         let finalText = ''
         let interimText = ''
         for (let i = 0; i < event.results.length; i++) {
@@ -77,12 +75,10 @@ export default function CaptureView() {
     recognition.onend = () => {
       recognitionRef.current = null
       if (isRecordingRef.current) {
-        // User hasn't tapped stop — restart to keep listening (expected on iOS)
         startSession(SpeechRecognitionAPI)
       } else {
-        // User tapped stop — extract whatever was captured
         const text = accumulatedRef.current.trim()
-        if (text) extract(text)
+        if (text) process(text)
         else { setState('idle'); setTranscript('') }
       }
     }
@@ -90,7 +86,7 @@ export default function CaptureView() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onerror = (event: any) => {
       if (event.error === 'aborted') return
-      if (event.error === 'no-speech') return // onend will restart the session
+      if (event.error === 'no-speech') return
       if (event.error === 'not-allowed') {
         isRecordingRef.current = false
         setError('Microphone access was blocked. Go to Settings > Safari > Microphone and allow access.')
@@ -115,26 +111,39 @@ export default function CaptureView() {
   function stopRecording() {
     isRecordingRef.current = false
     recognitionRef.current?.stop()
-    // onend fires → sees isRecordingRef.current=false → extracts
   }
 
-  async function extract(text: string) {
+  async function process(text: string) {
     setState('processing')
     try {
-      const res = await fetch('/api/extract', {
+      const res = await fetch('/api/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transcript: text }),
       })
-      const data = await res.json()
-      if (data.tasks.length === 0) {
-        setError('No tasks found — try again.')
-        setState('idle')
-        return
+      const data: { tasks: string[]; question: string | null } = await res.json()
+
+      // Save question immediately (silently) if one was captured
+      if (data.question) {
+        fetch('/api/questions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: data.question }),
+        })
       }
-      setTasks(data.tasks)
-      setTranscript(text)
-      setState('confirming')
+
+      if (data.tasks.length > 0) {
+        setTasks(data.tasks)
+        setTranscript(text)
+        setState('confirming')
+      } else if (data.question) {
+        setSavedMsg('Question saved.')
+        setState('idle')
+        setTimeout(() => setSavedMsg(null), 3000)
+      } else {
+        setError('Nothing found — try again.')
+        setState('idle')
+      }
     } catch {
       setError('Something went wrong. Tap to try again.')
       setState('idle')
@@ -161,43 +170,52 @@ export default function CaptureView() {
 
   if (state === 'confirming') {
     return (
-      <div className={styles.confirmView}>
-        <p className={styles.heard}>"{transcript.trim()}"</p>
-        <ul className={styles.extractedList}>
+      <div className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto">
+        <p className="text-sm opacity-50 italic leading-relaxed">"{transcript.trim()}"</p>
+        <ul className="flex flex-col gap-3 flex-1">
           {tasks.map((task, i) => (
-            <li key={i} className={styles.extractedItem}>{task}</li>
+            <li key={i} className="text-lg px-4 py-4 rounded-xl bg-black/5 dark:bg-white/5 leading-snug">
+              {task}
+            </li>
           ))}
         </ul>
-        <div className={styles.confirmActions}>
-          <button onClick={reset} className={styles.discardBtn}>Discard</button>
-          <button onClick={confirm} className={styles.confirmBtn}>
+        <div className="flex gap-3 pt-2">
+          <Button variant="secondary" className="flex-1" onClick={reset}>
+            Discard
+          </Button>
+          <Button className="flex-1" onClick={confirm}>
             Add {tasks.length} task{tasks.length !== 1 ? 's' : ''}
-          </button>
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className={styles.captureView}>
+    <div className="flex-1 flex flex-col items-center justify-center gap-8 p-6">
       <button
-        className={`${styles.recordBtn} ${state === 'recording' ? styles.recordingActive : ''}`}
+        className={cn(
+          'w-44 h-44 rounded-full border-none cursor-pointer transition-colors bg-red-700',
+          state === 'recording' && 'bg-red-900 animate-pulse-record',
+          state === 'processing' && 'bg-gray-400 cursor-default'
+        )}
         onClick={handleButtonClick}
         disabled={state === 'processing'}
         aria-label={state === 'recording' ? 'Stop recording' : 'Start recording'}
       />
       {state === 'recording' && (
-        <p className={styles.interimText}>
-          {transcript || 'Listening…'}
+        <p className="text-[17px] leading-relaxed text-center max-w-xs opacity-75">
+          {transcript || 'Listening\u2026'}
         </p>
       )}
-      {state === 'idle' && !error && (
-        <p className={styles.hint}>Tap to record</p>
+      {state === 'idle' && !error && !savedMsg && (
+        <p className="text-base opacity-45 text-center">Tap to record</p>
       )}
       {state === 'processing' && (
-        <p className={styles.hint}>Thinking…</p>
+        <p className="text-base opacity-45 text-center">Thinking\u2026</p>
       )}
-      {error && <p className={styles.errorText}>{error}</p>}
+      {savedMsg && <p className="text-base opacity-60 text-center">{savedMsg}</p>}
+      {error && <p className="text-sm text-red-600 text-center max-w-[280px]">{error}</p>}
     </div>
   )
 }

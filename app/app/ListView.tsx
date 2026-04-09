@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import type { Task } from '../api/tasks/route'
-import styles from './app.module.css'
 
 export default function ListView() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -34,31 +34,43 @@ export default function ListView() {
   const done = tasks.filter(t => t.done)
 
   if (loading) {
-    return <div className={styles.listView}><p className={styles.hint}>Loading…</p></div>
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-sm opacity-40">Loading…</p>
+      </div>
+    )
   }
 
   return (
-    <div className={styles.listView}>
+    <div className="flex-1 flex flex-col p-6 gap-4 overflow-y-auto">
       {tasks.length === 0 ? (
-        <p className={styles.hint}>No tasks yet.</p>
+        <p className="text-sm opacity-40 text-center mt-8">No tasks yet.</p>
       ) : (
-        <ul className={styles.taskList}>
+        <ul className="flex flex-col flex-1">
           {pending.map(task => (
-            <li key={task.id} className={styles.taskItem} onClick={() => toggle(task.id)}>
+            <li
+              key={task.id}
+              className="py-4 px-1 text-[17px] leading-relaxed border-b border-black/10 dark:border-white/10 cursor-pointer active:opacity-50 transition-opacity"
+              onClick={() => toggle(task.id)}
+            >
               {task.text}
             </li>
           ))}
           {done.map(task => (
-            <li key={task.id} className={`${styles.taskItem} ${styles.taskDone}`} onClick={() => toggle(task.id)}>
+            <li
+              key={task.id}
+              className="py-4 px-1 text-[17px] leading-relaxed border-b border-black/10 dark:border-white/10 cursor-pointer active:opacity-50 transition-opacity line-through opacity-35"
+              onClick={() => toggle(task.id)}
+            >
               {task.text}
             </li>
           ))}
         </ul>
       )}
       {done.length > 0 && (
-        <button onClick={clearDone} className={styles.clearBtn}>
+        <Button variant="outline" size="sm" className="self-center rounded-full" onClick={clearDone}>
           Clear {done.length} done
-        </button>
+        </Button>
       )}
     </div>
   )
