@@ -21,6 +21,14 @@
 - **PWA manifest for home screen install**: Added `public/manifest.json` and iOS-specific meta tags in `layout.tsx` (`appleWebApp`, `manifest`, `icons`). Without this, "Add to Home Screen" installs a bare bookmark with no icon and no standalone mode.
 - **Icons generated with Node.js zlib**: No ImageMagick or extra dependencies. Pure Node.js script using `zlib.deflateSync` to write valid PNG bytes. Red circle (#c92a2a) on white, matching the record button.
 
+## Iteration 3 (2026-04-09)
+- **Warm colour palette via oklch chroma**: Added small warm chroma (hue ~55-70) to all neutral tokens instead of replacing the colour system. Record button is terracotta (oklch 0.58 0.14 35) — warm but still reads as "record". Custom CSS classes (`.bg-record`, `.bg-record-active`) rather than Tailwind colour overrides because Tailwind v4 doesn't have built-in terracotta.
+- **Task assignment by Claude from speech**: Claude infers assignee from first-person pronouns ("I need to..." = Ji, "Barry needs to..." = Barry). Fallback normalisation handles old string[] format in case Claude ignores the new prompt shape. PATCH endpoint extended with a shape check (presence of `assignee` key) rather than adding a second endpoint.
+- **Single list with badges, not grouped sections**: Task list shows inline assignee badges rather than grouping by person. Grouping would add visual complexity for a two-person app. Tap-to-cycle (null→Ji→Barry→null) is the simplest assignment UI.
+- **Push via Web Push API, not native app**: iOS 16.4+ supports Web Push for home-screen PWAs. No native app needed. Service worker is push-only (no offline caching). VAPID config is lazy-loaded to avoid build errors when env vars aren't set.
+- **Vercel Cron for reminders**: Every 2 hours, Vercel calls /api/push/remind. Quiet hours 22:00-08:00 UK time hardcoded. Proxy.ts bypasses cookie auth for the cron endpoint using CRON_SECRET bearer token.
+- **PushOptIn asks "who are you?"**: Since the app has shared password auth (not per-user), the opt-in banner asks the user to identify as Ji or Barry so reminders are targeted correctly.
+
 ## Iteration 2 (2026-04-09)
 - **UUID slug replaced with cookie auth**: Slug was published in CLAUDE.md on the public repo — effectively no security. Replaced with HMAC-SHA256 cookie (APP_PASSWORD + APP_SECRET env vars). 30-day httpOnly cookie, no sessions DB needed. Login page at /login with Server Action sets cookie on correct password.
 - **proxy.ts not middleware.ts**: Next.js 16 deprecates `middleware.ts` in favour of `proxy.ts`, and the exported function must be named `proxy` not `middleware`. `runtime` export is disallowed (proxy always runs Node.js). Discovered at build time.
