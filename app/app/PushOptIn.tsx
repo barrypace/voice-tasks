@@ -3,27 +3,40 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 
-type Step = 'checking' | 'prompt' | 'who' | 'subscribing' | 'done' | 'unsupported'
+type Step = 'checking' | 'prompt' | 'who' | 'subscribing' | 'done' | 'not-pwa' | 'denied'
 
 export default function PushOptIn() {
   const [step, setStep] = useState<Step>('checking')
 
   useEffect(() => {
-    if (!('PushManager' in window) || !('serviceWorker' in navigator)) {
-      setStep('unsupported')
-      return
-    }
-    if (Notification.permission === 'granted') {
-      // Check if already subscribed
-      navigator.serviceWorker.ready.then(reg => {
-        reg.pushManager.getSubscription().then(sub => {
-          setStep(sub ? 'done' : 'prompt')
+    try {
+      // Push only works in installed PWAs on iOS, and in modern browsers on desktop
+      const hasPush = 'PushManager' in window
+      const hasSW = 'serviceWorker' in navigator
+      const hasNotification = 'Notification' in window
+
+      if (!hasPush || !hasSW || !hasNotification) {
+        // Likely iOS Safari (not installed PWA) or old browser
+        setStep('not-pwa')
+        return
+      }
+
+      if (Notification.permission === 'denied') {
+        setStep('denied')
+        return
+      }
+
+      if (Notification.permission === 'granted') {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.pushManager.getSubscription().then(sub => {
+            setStep(sub ? 'done' : 'prompt')
+          })
         })
-      })
-    } else if (Notification.permission === 'denied') {
-      setStep('unsupported')
-    } else {
-      setStep('prompt')
+      } else {
+        setStep('prompt')
+      }
+    } catch {
+      setStep('not-pwa')
     }
   }, [])
 
@@ -32,7 +45,7 @@ export default function PushOptIn() {
     try {
       const permission = await Notification.requestPermission()
       if (permission !== 'granted') {
-        setStep('unsupported')
+        setStep('denied')
         return
       }
 
@@ -50,11 +63,32 @@ export default function PushOptIn() {
 
       setStep('done')
     } catch {
-      setStep('unsupported')
+      setStep('not-pwa')
     }
   }
 
-  if (step === 'checking' || step === 'done' || step === 'unsupported') return null
+  if (step === 'checking') return null
+  if (step === 'done') return null
+
+  if (step === 'not-pwa') {
+    return (
+      <div className="p-4 rounded-xl bg-secondary mb-4">
+        <p className="text-sm opacity-60">
+          To get task reminders, open this app from your home screen (Safari → Share → Add to Home Screen).
+        </p>
+      </div>
+    )
+  }
+
+  if (step === 'denied') {
+    return (
+      <div className="p-4 rounded-xl bg-secondary mb-4">
+        <p className="text-sm opacity-60">
+          Notifications were blocked. To enable, go to Settings → Voice Tasks → Notifications.
+        </p>
+      </div>
+    )
+  }
 
   if (step === 'who') {
     return (
