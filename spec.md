@@ -88,22 +88,30 @@ No user IDs, no tags, no additional metadata.
 - Shows extracted tasks alongside original transcript
 - Confirm adds to list, discard resets
 
-### List
+### Tasks (previously "List")
 - Scrollable list of tasks
 - Tap to mark done (strikethrough, moves to bottom)
 - "Clear done" button to remove completed tasks
 - No editing in v1
-- Tab/link to switch between Capture and List
 
-No other screens.
+### Questions
+- Record button (blue, smaller than task capture) at top of screen
+- Speak a question for Barry when you can't interrupt him
+- Claude cleans up the spoken question to a single clear string — no confirm step
+- List of questions below the button (newest first)
+- Barry taps to mark as "seen"; "Clear seen" removes answered questions
+- Questions stored in separate Redis key (`questions`), no interaction with task list
+
+Bottom navigation: **Capture | Tasks | Questions**
 
 ---
 
 ## Auth
-- UUID slug in environment variable: `/app/{slug}`
-- Both users bookmark this URL
-- No match → 404
-- No sessions, no cookies
+- Single shared password in environment variable `APP_PASSWORD`
+- Login page at `/login` — enter password, 30-day httpOnly cookie is set
+- Cookie signed with HMAC-SHA256 using `APP_SECRET` env var
+- `proxy.ts` intercepts all `/app` and `/api/*` requests; redirects to `/login` or returns 401
+- No sessions database — stateless, token is recomputed on each request
 
 ---
 
@@ -115,10 +123,11 @@ Native app, push notifications, multiple lists, editing tasks, user accounts, vo
 ## Environment Variables
 ```
 ANTHROPIC_API_KEY=
-APP_SLUG=
+APP_PASSWORD=
+APP_SECRET=
 ```
 
-Upstash Redis credentials are automatically available via the Vercel project connection.
+Upstash Redis credentials are automatically available via the Vercel project connection. See `.env.example` for full list with explanations.
 
 ---
 
