@@ -39,11 +39,6 @@ function isQuietHours(): boolean {
 }
 
 export async function GET(request: Request) {
-  // Verify cron secret
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return Response.json({ error: 'Unauthorised' }, { status: 401 })
-  }
 
   if (isQuietHours()) {
     return Response.json({ skipped: true, reason: 'quiet hours' })

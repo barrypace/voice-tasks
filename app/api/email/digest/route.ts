@@ -117,14 +117,11 @@ function escapeHtml(str: string): string {
 }
 
 export async function GET(request: Request) {
-  // Verify cron secret
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return Response.json({ error: 'Unauthorised' }, { status: 401 })
-  }
+  const url = new URL(request.url)
+  const isTest = url.searchParams.get('test') === 'true'
 
-  // Only send when it's actually 5 PM UK time (handles BST/GMT)
-  if (!isUk5pm()) {
+  // Only send when it's actually 5 PM UK time (handles BST/GMT), unless in test mode
+  if (!isUk5pm() && !isTest) {
     return Response.json({ skipped: true, reason: 'not 5 PM UK time' })
   }
 

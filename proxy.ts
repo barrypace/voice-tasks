@@ -8,14 +8,18 @@ function expectedToken(): string {
 }
 
 export function proxy(request: NextRequest) {
-  // Cron endpoints: authenticate with bearer token instead of cookie
+  // Cron endpoints: try bearer token first (for Vercel Cron)
   const cronPaths = ['/api/push/remind', '/api/email/digest']
+  let cronAuthenticated = false
   if (cronPaths.includes(request.nextUrl.pathname)) {
     const authHeader = request.headers.get('authorization')
     if (authHeader === `Bearer ${process.env.CRON_SECRET}`) {
+      cronAuthenticated = true
+    }
+    // If bearer token is present and valid, skip cookie check
+    if (cronAuthenticated) {
       return NextResponse.next()
     }
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
   }
 
   const cookie = request.cookies.get('vt-auth')
