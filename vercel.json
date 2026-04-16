@@ -3,8 +3,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "crons": [
-    { "path": "/api/push/remind", "schedule": "0 8-21/2 * * *" },
-    { "path": "/api/email/digest", "schedule": "0 16 * * *" },
-    { "path": "/api/email/digest", "schedule": "0 17 * * *" }
+    { "path": "/api/email/digest", "schedule": "0 16 * * *" }
   ]
 }
