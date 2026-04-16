@@ -33,7 +33,9 @@ function isUk5pm(): boolean {
   const ukHour = parseInt(
     now.toLocaleString('en-GB', { timeZone: 'Europe/London', hour: 'numeric', hour12: false })
   )
-  return ukHour === 17
+  // Vercel Hobby limits us to one daily cron scheduling (16:00 UTC)
+  // This means 5 PM in summer (BST) but 4 PM in winter (GMT)
+  return ukHour === 16 || ukHour === 17
 }
 
 function formatDate(iso: string): string {

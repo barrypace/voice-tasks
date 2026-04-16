@@ -1,9 +1,9 @@
 # DECISIONS.md
 
 ## Iteration 4 (2026-04-16)
-- **Daily email digest via Resend**: Sends Barry a 5 PM summary of all pending tasks and unseen questions. Resend free tier (3,000/month) is more than enough for 1 email/day. Plain HTML email — no React Email library needed for a single template.
-- **Dual cron for BST/GMT**: Vercel cron is UTC-only. Two entries (16:00 and 17:00 UTC) cover both BST and GMT. Handler checks actual UK hour and no-ops if it's not 5 PM. Zero-cost approach — the wrong invocation returns immediately.
-- **Cron auth generalised in proxy.ts**: Refactored single-path check to an array of cron paths, so adding future cron endpoints is one line.
+- **Daily email digest via Resend**: Sends Barry a summary of all pending tasks and unseen questions. Resend free tier (3,000/month) is more than enough for 1 email/day. Plain HTML email — no React Email library needed for a single template.
+- **Vercel Hobby cron limit restricts DST handling**: Vercel Hobby plans only allow *one* cron job, and it cannot run more than once per day. Therefore, we use a single 16:00 UTC cron. This hits at 5 PM in BST (summer) but 4 PM in GMT (winter). The internal sanity check allows both `16` and `17` so it doesn't skip in winter.
+- **Cron auth fallback to browser cookie**: The `proxy.ts` middleware now checks for `CRON_SECRET` bearer token first, but falls through to normal app cookie auth if it's missing or wrong. This safely enables manual browser testing of cron routes like `?test=true` while logged in.
 
 ## Working principles
 - **Thin vertical slices**: build one usable end-to-end journey first, then expand. Don't complete a full layer (e.g. all API routes) before touching the next. Noted after building the full backend before any UI existed.
