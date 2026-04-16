@@ -8,8 +8,9 @@ function expectedToken(): string {
 }
 
 export function proxy(request: NextRequest) {
-  // Cron endpoint: authenticate with bearer token instead of cookie
-  if (request.nextUrl.pathname === '/api/push/remind') {
+  // Cron endpoints: authenticate with bearer token instead of cookie
+  const cronPaths = ['/api/push/remind', '/api/email/digest']
+  if (cronPaths.includes(request.nextUrl.pathname)) {
     const authHeader = request.headers.get('authorization')
     if (authHeader === `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.next()
